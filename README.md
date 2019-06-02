@@ -20,13 +20,14 @@ gazebo/src/travel/src/yolo/
 ## Gazebo
 ```
 $ cd gazebo
+$ source /opt/ros/crystal/setup.bash
 $ gazebo --verbose demo_world56.world
 ```
 
 ## Run in Gazebo
 Open another terminal
 ```
-$ cd gazebo
+$ cd demo
 $ source /opt/ros/crystal/setup.bash
 $ colcon build
 $ source install/setup.bash && source install/local_setup.bash

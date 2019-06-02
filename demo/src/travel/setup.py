@@ -5,7 +5,7 @@ package_name = 'control'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[],
+    packages=['object_detection'],
     py_modules=[
         'demo',
         'demo_yolo',

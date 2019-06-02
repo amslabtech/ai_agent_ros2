@@ -26,7 +26,6 @@ class Demo(Node):
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
         self.sub = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.locate)
-        data_folder = "src/travel/src/yolo/"
 
         self.objects = []
         self.now_state = 0
@@ -47,7 +46,7 @@ class Demo(Node):
                 self.i = 0
                 sys.exit()
 
-            self._send_twist(0.2, 0)
+            self._send_twist(-0.2, 0)
 
             result = np.asarray(image)
             cv2.namedWindow("result", cv2.WINDOW_NORMAL)
