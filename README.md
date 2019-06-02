@@ -12,10 +12,12 @@ $ sudo apt install python3-argcomplete
 $ sudo apt install python3-colcon-common-extensions
 ```
 
-Create model file using
-https://github.com/amslabtech/object_detection
-and copy it to 
-gazebo/src/travel/src/yolo/
+Prepare object_detection
+```
+cd demo/src/travel/
+https://github.com/seqsense/object_detection.git
+Prepare package and model by following README in object_detection
+```
 
 ## Gazebo
 ```
