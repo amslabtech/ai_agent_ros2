@@ -24,17 +24,22 @@ Prepare package and model by following README in object_detection
 $ cd gazebo
 $ source /opt/ros/crystal/setup.bash
 $ gazebo --verbose demo_world56.world
+$ killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient
 ```
 
-## Run in Gazebo
+## Run
 Open another terminal
 ```
 $ cd demo
 $ source /opt/ros/crystal/setup.bash
 $ colcon build
 $ source install/setup.bash && source install/local_setup.bash
+```
+Run each text_publisher, keyboard_publisher and image_publisher then
+```
 $ ros2 run travel demo
 or
 $ ros2 run travel demo_yolo
-$ killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient
+or
+$ ros2 run travel agent
 ```

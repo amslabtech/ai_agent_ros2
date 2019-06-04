@@ -9,6 +9,13 @@ setup(
     py_modules=[
         'demo',
         'demo_yolo',
+        'text_publisher',
+        'keyboard_publisher',
+        'image_publisher',
+        'action',
+        'condition',
+        'state',
+        'agent'
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -30,6 +37,10 @@ setup(
         'console_scripts': [
             'demo = demo:main',
             'demo_yolo = demo_yolo:main',
+            'text_publisher = text_publisher:main',
+            'keyboard_publisher = keyboard_publisher:main',
+            'image_publisher = image_publisher:main',
+            'agent = agent:main',
         ],
     },
 )
