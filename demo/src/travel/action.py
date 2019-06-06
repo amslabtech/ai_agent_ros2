@@ -26,5 +26,4 @@ class ActionChangeState(Action):
         self.next_state_id = next_state_id
 
     def act(self):
-        print("change state to", self.next_state_id)
         self.agent.now_state = self.agent.states[self.next_state_id]

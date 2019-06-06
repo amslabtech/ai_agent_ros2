@@ -59,11 +59,13 @@ class Agent(Node):
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
         self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
+        self.sub_r_img = self.create_subscription(Image,'/r_image', self.r_image_sub)
         # turtlebot3
         # self.pub = self.create_publisher(Twist, '/cmd_vel')
         # self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
         self.sub_txt = self.create_subscription(String,'/policy_text', self.text_sub)
         self.sub_key = self.create_subscription(String,'/keyboard', self.keyboard_sub)
+        # self.sub_obj = self.create_subscription(String,'/objects', self.object_detection_sub)
         data_folder = "/home/swatanabe/src/sq_control_robot_tracking_ros2/ai_travel/src/travel/src/yolo/"
         
         # yolo_args = {
@@ -148,8 +150,6 @@ class Agent(Node):
 
 
     def command(self):
-        print("command")
-        print(State.default_policies)
         action = None
         for policy in self.now_state.policies + State.default_policies:
             if policy.check(self.environments):
@@ -183,6 +183,23 @@ class Agent(Node):
 
         try:
             img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
+            hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            cv2.imwrite('%d.jpg' % self.j, img)
+
+        except CvBridgeError as e:
+           print(e)
+
+        #cv2.imshow("Image windowt",img)
+        cv2.imshow("Image windowt1", hsv_img)
+        cv2.waitKey(3)
+    
+    # def object_detection_sub(self,objects)
+
+    def r_image_sub(self,r_img):
+        # print("image sub")
+
+        try:
+            img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
             hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             cv2.imwrite('%d.jpg' % self.j, img)
 
