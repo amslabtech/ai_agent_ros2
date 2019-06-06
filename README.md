@@ -12,7 +12,7 @@ $ sudo apt install python3-argcomplete
 $ sudo apt install python3-colcon-common-extensions
 ```
 
-Prepare object_detection
+## Prepare object_detection
 ```
 cd demo/src/travel/
 https://github.com/seqsense/object_detection.git
