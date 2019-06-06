@@ -179,18 +179,15 @@ class Agent(Node):
 
 
     def image_sub(self,oimg):
-        # print("image sub")
+        print("image sub")
 
         try:
             img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
-            hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite('%d.jpg' % self.j, img)
 
         except CvBridgeError as e:
            print(e)
 
-        #cv2.imshow("Image windowt",img)
-        cv2.imshow("Image windowt1", hsv_img)
+        cv2.imshow("Image windowt",img)
         cv2.waitKey(3)
     
     # def object_detection_sub(self,objects)
@@ -200,15 +197,11 @@ class Agent(Node):
 
         try:
             img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
-            hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite('%d.jpg' % self.j, img)
+            cv2.namedWindow("result", cv2.WINDOW_NORMAL)
+            cv2.imshow("result", img)
 
         except CvBridgeError as e:
            print(e)
-
-        #cv2.imshow("Image windowt",img)
-        cv2.imshow("Image windowt1", hsv_img)
-        cv2.waitKey(3)
 
 
     def _send_twist(self, x_linear, z_angular):

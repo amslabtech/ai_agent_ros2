@@ -17,23 +17,6 @@ import colorsys
 import matplotlib.pyplot as plt
 import json
 
-
-
-
-#cascPath = '/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml'
-#faceCascade = cv2.CascadeClassifier(cascPath)
-#video_capture = cv2.VideoCapture(1)
-
-def get_unused_dir_num(pdir, pref=None):
-    os.makedirs(pdir, exist_ok=True)
-    dir_list = os.listdir(pdir)
-    for i in range(1000):
-        search_dir_name = ("" if pref is None else (
-            pref + "_" )) + '%03d' % i
-        if search_dir_name not in dir_list:
-            return os.path.join(pdir, search_dir_name)
-    raise NotFoundError('Error')
-
 class DemoYolo(Node):
 
     def __init__(self):
@@ -74,22 +57,14 @@ class DemoYolo(Node):
 
             objects = result['objects']
 
-            font = ImageFont.load_default()
-            thickness = (image.size[0] + image.size[1]) // 300
-
             r_image = make_r_image(image, objects, self.colors)
             
             result = np.asarray(r_image)
-            cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-            cv2.imshow("result", result)
+
+            self.pub.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
 
         except CvBridgeError as e:
            print(e)
-
-        #cv2.imshow("Image windowt",img)
-        cv2.imshow("Image windowt1", hsv_img)
-        cv2.waitKey(3)
-
 
 def main(args=None):
 
