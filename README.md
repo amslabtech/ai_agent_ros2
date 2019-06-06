@@ -14,9 +14,12 @@ $ sudo apt install python3-colcon-common-extensions
 
 ## Prepare object_detection
 ```
-cd demo/src/travel/
-https://github.com/seqsense/object_detection.git
-Prepare package and model by following README in object_detection
+$ cd demo/src/travel/
+$ git clone https://github.com/amslabtech/object_detection.git
+$ cd object_detection/
+$ ln -s keras-yolo3/yolo3 .
+$ wget https://pjreddie.com/media/files/yolov3.weights
+$ python3 keras-yolo3/convert.py yolov3.cfg yolov3.weights model_data/yolo3/coco/yolo.h5
 ```
 
 ## Gazebo
@@ -36,12 +39,8 @@ $ cd demo
 $ source /opt/ros/crystal/setup.bash
 $ colcon build
 $ source install/setup.bash && source install/local_setup.bash
-```
-Run each text_publisher, keyboard_publisher and image_publisher then
-```
-$ ros2 run travel demo
-or
-$ ros2 run travel demo_yolo
-or
+$ ros2 run travel keyboard_publisher
+$ ros2 run travel image_publisher
+$ ros2 run travel object_detection_publisher
 $ ros2 run travel agent
 ```

@@ -59,23 +59,14 @@ class Agent(Node):
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
         self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
-        self.sub_r_img = self.create_subscription(Image,'/r_image', self.r_image_sub)
+        self.sub_r_img = self.create_subscription(Image,'/demo/r_image', self.r_image_sub)
         # turtlebot3
         # self.pub = self.create_publisher(Twist, '/cmd_vel')
         # self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
-        self.sub_txt = self.create_subscription(String,'/policy_text', self.text_sub)
-        self.sub_key = self.create_subscription(String,'/keyboard', self.keyboard_sub)
+        self.sub_txt = self.create_subscription(String,'/demo/policy_text', self.text_sub)
+        self.sub_key = self.create_subscription(String,'/demo/keyboard', self.keyboard_sub)
+        self.sub_objects = self.create_subscription(String,'/demo/objects', self.objects_sub)
         # self.sub_obj = self.create_subscription(String,'/objects', self.object_detection_sub)
-        data_folder = "/home/swatanabe/src/sq_control_robot_tracking_ros2/ai_travel/src/travel/src/yolo/"
-        
-        # yolo_args = {
-        #     "model_path": data_folder+"yolo.h5",
-        #     "score": 0.01,
-        #     "anchors_path": data_folder+"anchors.txt",
-        #     "classes_path": data_folder+"classes.txt",
-        #         }
-        # self.yolo_args = dict((k, v) for k, v in yolo_args.items() if v)
-        # self.model = YOLO(**self.yolo_args)
 
         self.policies = []
         self.actions = []
@@ -175,7 +166,6 @@ class Agent(Node):
         self.environments['keyboard'].keyboard_policy = key_str
         print("env keyboard_policy",self.environments['keyboard'].keyboard_policy)
         self.command()
-        # self.actions[5].act()
 
 
     def image_sub(self,oimg):
@@ -190,7 +180,8 @@ class Agent(Node):
         cv2.imshow("Image windowt",img)
         cv2.waitKey(3)
     
-    # def object_detection_sub(self,objects)
+    def objects_sub(self, otext):
+        print(otext.data)
 
     def r_image_sub(self,r_img):
         # print("image sub")
@@ -209,7 +200,6 @@ class Agent(Node):
         twist.linear.x, twist.linear.y, twist.linear.z = x_linear
         twist.angular.x, twist.angular.y, twist.angular.z = z_angular
         self.pub.publish(twist)
-
 
 def main(args=None):
 

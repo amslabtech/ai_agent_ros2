@@ -17,14 +17,23 @@ import colorsys
 import matplotlib.pyplot as plt
 import json
 
+<<<<<<< HEAD
 class DemoYolo(Node):
+=======
+class ObjectDetection(Node):
+>>>>>>> add_object_detection_publisher
 
     def __init__(self):
         super().__init__('traveller')
         self.i = 0
         self.bridge = CvBridge()
+<<<<<<< HEAD
         self.pub = self.create_publisher(String, '/objects')
         self.pub = self.create_publisher(Image, '/r_image')
+=======
+        self.pub = self.create_publisher(String, '/demo/objects')
+        self.pub = self.create_publisher(Image, '/demo/r_image')
+>>>>>>> add_object_detection_publisher
         self.sub = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.locate)
         data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
         
@@ -69,12 +78,21 @@ class DemoYolo(Node):
 def main(args=None):
 
     rclpy.init(args=args)
+<<<<<<< HEAD
     traveller = DemoYolo()
     try:
         rclpy.spin(traveller)
     finally:
         if traveller not in locals():
             traveller.destroy_node()
+=======
+    objectdetection = ObjectDetection()
+    try:
+        rclpy.spin(objectdetection)
+    finally:
+        if objectdetection not in locals():
+            objectdetection.destroy_node()
+>>>>>>> add_object_detection_publisher
         rclpy.shutdown()
 
 if __name__ == '__main__':

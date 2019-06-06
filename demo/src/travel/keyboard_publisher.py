@@ -8,7 +8,7 @@ class Keyboard(Node):
 
     def __init__(self):
         super().__init__('text')
-        self.pub = self.create_publisher(String, '/keyboard')
+        self.pub = self.create_publisher(String, '/demo/keyboard')
         self.check()
 
     def on_press(self, key):
