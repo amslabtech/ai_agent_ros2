@@ -14,7 +14,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 from action import *
-from condition import *
+from policy import *
 from state import *
 
 #cascPath = '/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml'
@@ -41,12 +41,12 @@ class EnvironmentText(Environment):
     def __init__(self):
         super().__init__()
         self.text = ""
-        self.text_condition = None
+        self.text_policy = None
 
 class EnvironmentKeyboard(Environment):
     def __init__(self):
         super().__init__()
-        self.keyboard_condition = None
+        self.keyboard_policy = None
 
 class Agent(Node):
 
@@ -57,12 +57,12 @@ class Agent(Node):
         self.d = 0
         self.c = 0
         self.bridge = CvBridge()
-        # self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
-        # self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
+        self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
+        self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
         # turtlebot3
-        self.pub = self.create_publisher(Twist, '/cmd_vel')
-        self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
-        self.sub_txt = self.create_subscription(String,'/condition_text', self.text_sub)
+        # self.pub = self.create_publisher(Twist, '/cmd_vel')
+        # self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
+        self.sub_txt = self.create_subscription(String,'/policy_text', self.text_sub)
         self.sub_key = self.create_subscription(String,'/keyboard', self.keyboard_sub)
         data_folder = "/home/swatanabe/src/sq_control_robot_tracking_ros2/ai_travel/src/travel/src/yolo/"
         
@@ -75,7 +75,7 @@ class Agent(Node):
         # self.yolo_args = dict((k, v) for k, v in yolo_args.items() if v)
         # self.model = YOLO(**self.yolo_args)
 
-        self.conditions = []
+        self.policies = []
         self.actions = []
         self.states = []
         self.objects = []
@@ -83,7 +83,7 @@ class Agent(Node):
 
         self.__init_environment()
         self.__init_action()
-        self.__init_condition()
+        self.__init_policy()
         self.__init_state()
 
         self.now_state = self.states[0]
@@ -92,69 +92,78 @@ class Agent(Node):
         self.environments['text'] = EnvironmentText()
         self.environments['keyboard'] = EnvironmentKeyboard()
 
+    def __init_state(self):
+        State.default_actions.append(self.actions[0])
+        for j in range(8):
+            policy = self.policies[j]
+            policy.set_action(self.actions[j+1])
+            State.default_policies.append((policy))
+        state = StateChild()
+        self.states.append(state)
+        state = StateChild()
+        state.args['speed'] = 0.4
+        self.states.append(state)
+
+
+    def __init_policy(self):
+        moves = "wsad"
+        for i in range(4):
+            policy = PolicyKeyboard(moves[i])
+            self.policies.append(policy)
+        policy = PolicyKeyboard('x')
+        self.policies.append(policy)
+        policy = PolicyKeyboard('None')
+        self.policies.append(policy)
+        states = "01"
+        for i in range(len(states)):
+            policy = PolicyKeyboard(states[i])
+            self.policies.append(policy)
+
+
     def __init_action(self):
-        xs = [0.2, -0.2, 0.0, 0.0]
-        zs = [0.0, 0.0, 0.2, -0.2]
+
+        action = Action(self)
+        self.actions.append(action)
+
+        xs = [1.0, -1.0, 0.0, 0.0]
+        zs = [0.0, 0.0, 1.0, -1.0]
 
         for i in range(len(xs)):
             action = ActionTwist({
-                    "twist_linear" : (xs[i], 0.0,0.0),
+                    "twist_linear" : (xs[i], 0.0, 0.0),
                     "twist_angular" : (0.0, 0.0, zs[i])
                 }, self)
             self.actions.append(action)
 
         action = ActionTwist({
-                "twist_linear" : (0.0, 0.0,0.0),
+                "twist_linear" : (0.0, 0.0, 0.0),
                 "twist_angular" : (0.0, 0.0, 0.0)
             }, self)
         self.actions.append(action)
+        self.actions.append(action)
+        for i in range(2):
+            action = ActionChangeState(i, self)
+            self.actions.append(action)
 
-    def __init_condition(self):
-        for i in range(4):
-            condition = ConditionText({
-                    "index" : i
-                })
-            self.conditions.append(condition)
 
-        moves = "wsad"
-        for i in range(4):
-            condition = ConditionKeyboard(moves[i])
-            self.conditions.append(condition)
-        condition = ConditionKeyboard('None')
-        self.conditions.append(condition)
-
-    def __init_state(self):
-        for i in range(5):
-            state = StateChild()
-            state.default_actions.append(self.actions[i])
-            for j in range(8):
-                condition = self.conditions[j]
-                condition.set_action(self.actions[j % 4])
-                state.conditions.append((condition))
-            condition = self.conditions[8]
-            condition.set_action(self.actions[4])
-            state.conditions.append((condition))
-            self.states.append(state)
-
-        for i in range(5):
-            self.actions[i].next_state = self.states[i]
 
     def command(self):
+        print("command")
+        print(State.default_policies)
         action = None
-        for condition in self.now_state.conditions:
-            if condition.check(self.environments):
-                action = condition.action
-                self.now_state = action.next_state
+        for policy in self.now_state.policies + State.default_policies:
+            if policy.check(self.environments):
+                action = policy.action
                 break
 
         if action is None:
             action = self.now_state.default_actions[0]
 
-        action.twist()
+        action.act()
 
     def text_sub(self, otext):
-        self.environments['text'].text_condition = int(otext.data)
-        print("env text_condition",self.environments['text'].text_condition)
+        self.environments['text'].text_policy = int(otext.data)
+        print("env text_policy",self.environments['text'].text_policy)
         self.command()
 
     def keyboard_sub(self, key):
@@ -163,13 +172,14 @@ class Agent(Node):
             key_str = key_str[1:-1]
         elif key_str != 'None':
             key_str = key_str[4:]
-        self.environments['keyboard'].keyboard_condition = key_str
-        print("env keyboard_condition",self.environments['keyboard'].keyboard_condition)
+        self.environments['keyboard'].keyboard_policy = key_str
+        print("env keyboard_policy",self.environments['keyboard'].keyboard_policy)
         self.command()
+        # self.actions[5].act()
 
 
     def image_sub(self,oimg):
-        print("image sub")
+        # print("image sub")
 
         try:
             img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
@@ -183,81 +193,6 @@ class Agent(Node):
         cv2.imshow("Image windowt1", hsv_img)
         cv2.waitKey(3)
 
-    '''
-    def locate(self, oimg):
-        try:
-            img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
-            hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-            # Object detection
-            image=PIL_Image.fromarray(img)
-            """
-            out_boxes, out_scores, out_classes, _ = self.model.detect_raw(image)
-
-            annotation = []
-            for box, score, class_ in zip(out_boxes, out_scores, out_classes):
-                predicted_class = self.model.class_names[class_]
-                box = box.tolist()
-                annotation.append({
-                    "bbox": [box[1], box[0], box[3], box[2]],
-                    "score": float(score),
-                    "class": predicted_class,
-                    "class_id": int(class_),
-                })
-            font = ImageFont.load_default()
-
-            thickness = (image.size[0] + image.size[1]) // 300
-            
-            self.objects = []
-
-            for i, c in reversed(list(enumerate(out_classes))):
-                predicted_class = self.model.class_names[c]
-                box = out_boxes[i]
-                score = out_scores[i]
-                top, left, bottom, right = box
-                center_y = (top + bottom) / 2.0
-                center_x = (left + right) / 2.0
-                area = (bottom - top) * (right - left)
-
-                label = '{} {:.2f}'.format(predicted_class, score)
-                draw = ImageDraw.Draw(image)
-                label_size = draw.textsize(label, font)
-    
-                top, left, bottom, right = box
-    
-                if top - label_size[1] >= 0:
-                    text_origin = np.array([left, top - label_size[1]])
-                else:
-                    text_origin = np.array([left, top + 1])
-                for i in range(thickness):
-                    draw.rectangle(
-                        [left + i, top + i, right - i, bottom - i],
-                        outline=self.model.colors[c])
-                draw.rectangle(
-                    [tuple(text_origin), tuple(text_origin + label_size)],
-                    fill=self.model.colors[c])
-                draw.text(tuple(text_origin), label, fill=(0, 0, 0), font=font)
-                del draw
-
-                print({'area' : area , 'center_x' : center_x, 'center_y' : center_y, "class_name" : predicted_class, "score" : score})
-                self.objects.append({'area' : area , 'center_x' : center_x, 'center_y' : center_y, "class_name" : predicted_class, "score" : score})
-            
-            """
-            self.i += 1
-
-            self.command()
-
-            result = np.asarray(image)
-            cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-            cv2.imshow("result", result)
-
-        except CvBridgeError as e:
-           print(e)
-
-        #cv2.imshow("Image windowt",img)
-        cv2.imshow("Image windowt1", hsv_img)
-        cv2.waitKey(3)
-    '''
 
     def _send_twist(self, x_linear, z_angular):
         twist = Twist()

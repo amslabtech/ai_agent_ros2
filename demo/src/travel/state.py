@@ -1,33 +1,36 @@
 import copy
 
 from action import *
-from condition import *
+from policy import *
 
 class State():
+    default_policies = []
+    default_actions = []
 
     def __init__(self):
-        self.default_conditions = []
-        self.default_actions = []
-        # self.__init_default_conditions()
 
-    def __init_default_conditions(self):
-        condition = Condition()
-        self.default_conditions.append(condition)
+        # self.__init_default_policies()
+        pass
+
+    def __init_default_policies(self):
+        policy = Policy()
+        State.default_policies.append(policy)
 
 class StateChild(State):
 
     def __init__(self):
         super().__init__()
-        self.conditions = []
+        self.args = {'speed': 0.2}
+        self.policies = []
     
-    # def get_match_condition_index(self, objects):
-    #     for i, cond in enumerate(self.conditions):
+    # def get_match_policy_index(self, objects):
+    #     for i, cond in enumerate(self.policies):
     #         if cond.is_match_states(objects):
     #             return i
     #     return -1
 
     # def check_state(self, img, text):
-    #     for i, cond in enumerate(self.conditions):
+    #     for i, cond in enumerate(self.policies):
     #         if cond.is_match_states(objects):
     #             return i
     #     return -1

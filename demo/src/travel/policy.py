@@ -1,4 +1,4 @@
-class Condition():
+class Policy():
 
     def __init__(self):
         pass
@@ -6,25 +6,29 @@ class Condition():
     def set_action(self, action):
         self.action = action
 
-class ConditionText(Condition):
+    def check(self):
+        return False
+    
+
+class PolicyText(Policy):
     
     def __init__(self, dict):
         super().__init__()
         self.index = dict['index']
 
     def check(self, env):
-        return self.index == env['text'].text_condition
+        return self.index == env['text'].text_Policy
         
-class ConditionKeyboard(Condition):
+class PolicyKeyboard(Policy):
     def __init__(self, key_str):
         super().__init__()
         self.key_str = key_str
     
     def check(self, env):
-        return self.key_str == env['keyboard'].keyboard_condition
+        return self.key_str == env['keyboard'].keyboard_policy
 
 '''
-class ConditionImage(Condition):
+class PolicyImage(Policy):
     
     def __init__(self, dict):
         super().__init__()
@@ -46,7 +50,7 @@ class ConditionImage(Condition):
         return sum(should_exist_objects_matched) == len(self.should_exist_objects) and not should_not_exist_objects_matched
 
     def is_match(self, cond_object, obj):
-        print("Condition:",cond_object) 
+        print("Policy:",cond_object) 
         print("Detected Object",obj)
         if(cond_object["class_name"] != obj["class_name"]):
             return False

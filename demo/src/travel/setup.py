@@ -13,7 +13,7 @@ setup(
         'keyboard_publisher',
         'image_publisher',
         'action',
-        'condition',
+        'policy',
         'state',
         'agent'
     ],
