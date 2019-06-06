@@ -21,8 +21,10 @@ Prepare package and model by following README in object_detection
 
 ## Gazebo
 ```
+$ sudo apt install ros-crystal-gazebo-*
 $ cd gazebo
 $ source /opt/ros/crystal/setup.bash
+$ source /usr/share/gazebo/setup.sh
 $ gazebo --verbose demo_world56.world
 $ killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient
 ```
