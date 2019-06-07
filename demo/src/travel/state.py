@@ -20,7 +20,6 @@ class StateChild(State):
 
     def __init__(self):
         super().__init__()
-        self.args = {'speed': 0.2}
         self.policies = []
     
     # def get_match_policy_index(self, objects):

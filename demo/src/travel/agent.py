@@ -4,6 +4,7 @@ import sys
 import rclpy
 import numpy as np
 from rclpy.node import Node
+from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -62,8 +63,9 @@ class Agent(Node):
         self.sub_txt = self.create_subscription(String,'/demo/policy_text', self.text_sub)
         self.sub_key = self.create_subscription(String,'/demo/keyboard', self.keyboard_sub)
         self.sub_objects = self.create_subscription(String,'/demo/objects', self.objects_sub)
+        self.sub_odom = self.create_subscription(Odometry,'/pos/odom_pos', self.odom_sub)
 
-        self.policies = []
+        self.policies = dict()
         self.actions = dict()
         self.states = []
         self.objects = []
@@ -74,6 +76,7 @@ class Agent(Node):
         self.__init_policy()
         self.__init_state()
 
+        self.speed = 0.2
         self.now_state = self.states[0]
 
     def __init_environment(self):
@@ -99,29 +102,36 @@ class Agent(Node):
             action = ActionChangeState(i, self)
             self.actions[self.sts[i]] = action
 
+        self.speed_controls = {"up":0.2, "down":-0.2}
+        for key in self.speed_controls.keys():
+            action = ActionChangeSpeed(self.speed_controls[key],self)
+            self.actions[key] = action
 
     def __init_policy(self):
         moves = "swxad"
         for i in range(len(moves)):
             policy = PolicyKeyboard(moves[i])
-            self.policies.append(policy)
+            self.policies[self.move_keys[i]] = policy
         states = "01"
         for i in range(len(states)):
             policy = PolicyKeyboard(states[i])
-            self.policies.append(policy)
+            self.policies[self.sts[i]] = policy
+        config = "hl"
+        for i in range(len(config)):
+            policy = PolicyKeyboard(config[i])
+            self.policies[list(self.speed_controls.keys())[i]] = policy
 
 
     def __init_state(self):
         State.default_actions.append(self.actions["stop"])
-        all_keys = self.move_keys + self.sts
-        for j in range(7):
-            policy = self.policies[j]
-            policy.set_action(self.actions[all_keys[j]])
+        all_keys = self.move_keys + self.sts + list(self.speed_controls.keys())
+        for key in all_keys:
+            policy = self.policies[key]
+            policy.set_action(self.actions[key])
             State.default_policies.append((policy))
         state = StateChild()
         self.states.append(state)
         state = StateChild()
-        state.args['speed'] = 0.4
         self.states.append(state)
 
 
@@ -137,10 +147,12 @@ class Agent(Node):
 
         action.act()
 
+
     def text_sub(self, otext):
         self.environments['text'].text_policy = int(otext.data)
         print("env text_policy",self.environments['text'].text_policy)
         self.command()
+
 
     def keyboard_sub(self, key):
         key_str = key.data
@@ -167,6 +179,25 @@ class Agent(Node):
     
     def objects_sub(self, otext):
         print(otext.data)
+
+
+    def odom_sub(self, data):
+        pos = data.pose.pose.position
+        self.position = (
+            round(pos.x,2),
+            round(pos.y,2),
+            round(pos.z,2)
+        )
+        ori = data.pose.pose.orientation
+        self.orientation = (
+            round(ori.x,2),
+            round(ori.y,2),
+            round(ori.z,2),
+            round(ori.w,2)
+        )
+        print("position:",self.position)
+        print("orientation",self.orientation)
+
 
     def r_image_sub(self,r_img):
         # print("image sub")
