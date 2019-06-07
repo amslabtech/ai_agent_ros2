@@ -497,8 +497,8 @@
               <argument>image_raw:=custom_img</argument>
               <argument>camera_info:=custom_info</argument>
             </ros>
-            <camera_name>left_camera</camera_name>
-            <frame_name>left_frame</frame_name>
+            <camera_name>right_camera</camera_name>
+            <frame_name>right_frame</frame_name>
             <hack_baseline>0.07</hack_baseline>
           </plugin>
         </sensor>
@@ -570,8 +570,8 @@
               <argument>image_raw:=custom_img</argument>
               <argument>camera_info:=custom_info</argument>
             </ros>
-            <camera_name>right_camera</camera_name>
-            <frame_name>right_frame</frame_name>
+            <camera_name>left_camera</camera_name>
+            <frame_name>left_frame</frame_name>
             <hack_baseline>0.07</hack_baseline>
           </plugin>
         </sensor>
