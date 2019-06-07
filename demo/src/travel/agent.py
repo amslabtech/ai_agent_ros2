@@ -69,7 +69,7 @@ class Agent(Node):
         # self.sub_obj = self.create_subscription(String,'/objects', self.object_detection_sub)
 
         self.policies = []
-        self.actions = []
+        self.actions = dict()
         self.states = []
         self.objects = []
         self.environments = {}
@@ -85,59 +85,49 @@ class Agent(Node):
         self.environments['text'] = EnvironmentText()
         self.environments['keyboard'] = EnvironmentKeyboard()
 
-    def __init_state(self):
-        State.default_actions.append(self.actions[0])
-        for j in range(8):
-            policy = self.policies[j]
-            policy.set_action(self.actions[j+1])
-            State.default_policies.append((policy))
-        state = StateChild()
-        self.states.append(state)
-        state = StateChild()
-        state.args['speed'] = 0.4
-        self.states.append(state)
+
+    def __init_action(self):
+
+        self.move_keys = ["stop", "forward", "backward", "left", "right"]
+        xs = [0.0, 1.0, -1.0, 0.0, 0.0]
+        zs = [0.0, 0.0, 0.0, 1.0, -1.0]
+
+        for i in range(len(self.move_keys)):
+            action = ActionTwist({
+                    "twist_linear" : (xs[i], 0.0, 0.0),
+                    "twist_angular" : (0.0, 0.0, zs[i])
+                }, self)
+            self.actions[self.move_keys[i]] = action
+
+        self.sts = ["st0", "st1"]
+        for i in range(len(self.sts)):
+            action = ActionChangeState(i, self)
+            self.actions[self.sts[i]] = action
 
 
     def __init_policy(self):
-        moves = "wsad"
-        for i in range(4):
+        moves = "swxad"
+        for i in range(len(moves)):
             policy = PolicyKeyboard(moves[i])
             self.policies.append(policy)
-        policy = PolicyKeyboard('x')
-        self.policies.append(policy)
-        policy = PolicyKeyboard('None')
-        self.policies.append(policy)
         states = "01"
         for i in range(len(states)):
             policy = PolicyKeyboard(states[i])
             self.policies.append(policy)
 
 
-    def __init_action(self):
-
-        action = Action(self)
-        self.actions.append(action)
-
-        xs = [1.0, -1.0, 0.0, 0.0]
-        zs = [0.0, 0.0, 1.0, -1.0]
-
-        for i in range(len(xs)):
-            action = ActionTwist({
-                    "twist_linear" : (xs[i], 0.0, 0.0),
-                    "twist_angular" : (0.0, 0.0, zs[i])
-                }, self)
-            self.actions.append(action)
-
-        action = ActionTwist({
-                "twist_linear" : (0.0, 0.0, 0.0),
-                "twist_angular" : (0.0, 0.0, 0.0)
-            }, self)
-        self.actions.append(action)
-        self.actions.append(action)
-        for i in range(2):
-            action = ActionChangeState(i, self)
-            self.actions.append(action)
-
+    def __init_state(self):
+        State.default_actions.append(self.actions["stop"])
+        all_keys = self.move_keys + self.sts
+        for j in range(7):
+            policy = self.policies[j]
+            policy.set_action(self.actions[all_keys[j]])
+            State.default_policies.append((policy))
+        state = StateChild()
+        self.states.append(state)
+        state = StateChild()
+        state.args['speed'] = 0.4
+        self.states.append(state)
 
 
     def command(self):
