@@ -17,14 +17,25 @@ import colorsys
 import matplotlib.pyplot as plt
 import json
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
+
 class ObjectDetection(Node):
 
     def __init__(self):
         super().__init__('traveller')
         self.i = 0
         self.bridge = CvBridge()
-        self.pub = self.create_publisher(String, '/demo/objects')
-        self.pub = self.create_publisher(Image, '/demo/r_image')
+        self.pub_obj = self.create_publisher(String, '/demo/objects')
+        self.pub_img = self.create_publisher(Image, '/demo/r_image')
         self.sub = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.locate)
         data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
         
@@ -61,7 +72,11 @@ class ObjectDetection(Node):
             
             result = np.asarray(r_image)
 
-            self.pub.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
+            self.pub_img.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
+        
+            string = String()
+            string.data = json.dumps(objects,cls = MyEncoder)
+            self.pub_obj.publish(string)
 
         except CvBridgeError as e:
            print(e)
