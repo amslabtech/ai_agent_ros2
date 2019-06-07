@@ -52,10 +52,6 @@ class Agent(Node):
 
     def __init__(self):
         super().__init__('traveller')
-        self.i = 0
-        self.j = 0
-        self.d = 0
-        self.c = 0
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
         self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
@@ -66,7 +62,6 @@ class Agent(Node):
         self.sub_txt = self.create_subscription(String,'/demo/policy_text', self.text_sub)
         self.sub_key = self.create_subscription(String,'/demo/keyboard', self.keyboard_sub)
         self.sub_objects = self.create_subscription(String,'/demo/objects', self.objects_sub)
-        # self.sub_obj = self.create_subscription(String,'/objects', self.object_detection_sub)
 
         self.policies = []
         self.actions = dict()
