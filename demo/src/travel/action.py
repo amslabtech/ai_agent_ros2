@@ -24,6 +24,7 @@ class ActionChangeState(Action):
     def __init__(self, next_state_id, agent):
         super().__init__(agent)
         self.next_state_id = next_state_id
-
+        
     def act(self):
         self.agent.now_state = self.agent.states[self.next_state_id]
+        print("Changed to state", self.next_state_id)
