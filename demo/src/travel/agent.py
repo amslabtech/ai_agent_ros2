@@ -73,7 +73,7 @@ class Agent(Node):
         for policy in self.policies:
             action_prob = self.policies[policy].check(self.state)
             for action_name in action_prob:
-                action_probs[action_name] = action_prob[action_name]
+                action_probs[action_name] += action_prob[action_name]
 
         if len(action_probs) > 0:
             action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
