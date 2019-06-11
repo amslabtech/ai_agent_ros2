@@ -119,8 +119,10 @@ class Agent(Node):
 
     def __init_policy(self):
         keys = "swxad"
-        policy_keys = ["s_pressed","w_pressed","x_pressed","a_pressed","d_pressed"]
+
         action_keys = ["stop", "forward", "backward", "left", "right"]
+
+        policy_keys = ["s_pressed","w_pressed","x_pressed","a_pressed","d_pressed"]
         probs = np.eye(5)
         for i in range(len(keys)):
             action_prob = {}
@@ -128,6 +130,17 @@ class Agent(Node):
                 action_prob[action_keys[j]] = probs[i][j]
             policy = PolicyKeyboard(keys[i], action_prob)
             self.policies[policy_keys[i]] = policy
+
+        keys = "p"
+        policy_keys = ["p_pressed"]
+        probs = np.ones(len(action_keys)) / len(action_keys)
+        for i in range(len(keys)):
+            action_prob = {}
+            for j in range(len(action_keys)):
+                action_prob[action_keys[j]] = probs[j]
+            policy = PolicyKeyboard(keys[i], action_prob)
+            self.policies[policy_keys[i]] = policy
+    
         # states = "01"
         # for i in range(len(states)):
         #     policy = PolicyKeyboard(states[i])
