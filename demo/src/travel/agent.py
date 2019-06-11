@@ -63,6 +63,23 @@ class Agent(Node):
 
         self.speed = 0.2
 
+
+        self.time_period = 0.1
+        self.tmr = self.create_timer(self.time_period, self.step)
+
+
+    def step(self):
+        action_probs = defaultdict(int)
+        for policy in self.policies:
+            action_prob = self.policies[policy].check(self.state)
+            for action_name in action_prob:
+                action_probs[action_name] = action_prob[action_name]
+
+        if len(action_probs) > 0:
+            action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
+            action_key = list(action_probs.keys())[action_idx]
+            self.actions[action_key].act()
+        
     def __init_state(self):
         self.state = State()
         pass
@@ -110,20 +127,6 @@ class Agent(Node):
         # for i in range(len(config)):
         #     policy = PolicyKeyboard(config[i])
         #     self.policies[list(self.speed_controls.keys())[i]] = policy
-
-
-
-    def step(self):
-        action_probs = defaultdict(int)
-        for policy in self.policies:
-            action_prob = self.policies[policy].check(self.state)
-            for action_name in action_prob:
-                action_probs[action_name] = action_prob[action_name]
-
-        if len(action_probs) > 0:
-            action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
-            action_key = list(action_probs.keys())[action_idx]
-            self.actions[action_key].act()
         
 
     def text_sub(self, otext):
@@ -140,7 +143,6 @@ class Agent(Node):
             key_str = key_str[4:]
         print(key_str)
         self.state.keyboard = key_str
-        self.step()
 
 
     def image_sub(self,oimg):
