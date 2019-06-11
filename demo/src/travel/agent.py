@@ -55,8 +55,17 @@ class Agent(Node):
         super().__init__('traveller')
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
-        self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
-        self.sub_r_img = self.create_subscription(Image,'/demo/r_image', self.r_image_sub)
+        self.sub_img_list = []
+        self.sub_detected_img_list = []
+
+        detected_image_names = ['/demo/front_camera/detected_image']
+        camera_names = ['/cam/front_camera/image_raw']
+
+        for name in camera_names:
+            self.sub_img_list.append(self.create_subscription(Image, name, self.image_sub_closure(name)))
+
+        for name in detected_image_names:
+            self.sub_detected_img_list.append(self.create_subscription(Image, name, self.r_image_sub_closure(name)))
         # turtlebot3
         # self.pub = self.create_publisher(Twist, '/cmd_vel')
         # self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
@@ -165,18 +174,19 @@ class Agent(Node):
         self.command()
 
 
-    def image_sub(self,oimg):
-        print("image sub")
+    def image_sub_closure(self, name):
 
-        try:
-            img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
-
-        except CvBridgeError as e:
-           print(e)
-
-        cv2.imshow("Image windowt",img)
-        cv2.waitKey(3)
+        def image_sub(oimg):
+            print("image sub")
+            try:
+                img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
+            except CvBridgeError as e:
+                print(e)
+            cv2.imshow(name, img)
+            cv2.waitKey(3)
+        return image_sub
     
+
     def objects_sub(self, otext):
         print(otext.data)
 
@@ -199,16 +209,16 @@ class Agent(Node):
         print("orientation",self.orientation)
 
 
-    def r_image_sub(self,r_img):
-        # print("image sub")
-
-        try:
-            img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
-            cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-            cv2.imshow("result", img)
-
-        except CvBridgeError as e:
-           print(e)
+    def r_image_sub_closure(self, name):
+        def r_image_sub(r_img):
+            # print("image sub")
+            try:
+                img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
+                cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+                cv2.imshow(name, img)
+            except CvBridgeError as e:
+                print(e)
+        return r_image_sub
 
 
     def _send_twist(self, x_linear, z_angular):
@@ -216,6 +226,7 @@ class Agent(Node):
         twist.linear.x, twist.linear.y, twist.linear.z = x_linear
         twist.angular.x, twist.angular.y, twist.angular.z = z_angular
         self.pub.publish(twist)
+
 
 def main(args=None):
 

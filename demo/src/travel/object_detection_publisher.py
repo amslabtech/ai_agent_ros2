@@ -35,8 +35,17 @@ class ObjectDetection(Node):
         self.i = 0
         self.bridge = CvBridge()
         self.pub_obj = self.create_publisher(String, '/demo/objects')
-        self.pub_img = self.create_publisher(Image, '/demo/r_image')
-        self.sub = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.locate)
+        self.pub_list = []
+        self.sub_list = []
+
+        pub_names = ['/demo/front_camera/detected_image']
+        camera_names = ['/cam/front_camera/image_raw']
+
+        for pub_name, camera_name in zip(pub_names, camera_names):
+            pub = self.create_publisher(Image, pub_name)
+            self.pub_list.append(pub)
+            self.sub_list.append(self.create_subscription(Image, camera_name, self.locate_closure(pub)))
+
         data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
         
         yolo_args = {
@@ -56,30 +65,30 @@ class ObjectDetection(Node):
         colors = generate_colors(class_num)
         self.colors = colors
 
-    def locate(self,oimg):
-        try:
-            img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
-            hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    def locate_closure(self, pub):
+        def locate(oimg):
+            try:
+                img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
+                hsv_img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # Object detection
-            image = PIL_Image.fromarray(img)
+                # Object detection
+                image = PIL_Image.fromarray(img)
 
-            result = self.model.detect_image(image)
+                result = self.model.detect_image(image)
 
-            objects = result['objects']
+                objects = result['objects']
 
-            r_image = make_r_image(image, objects, self.colors)
-            
-            result = np.asarray(r_image)
+                r_image = make_r_image(image, objects, self.colors)
+                result = np.asarray(r_image)
 
-            self.pub_img.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
-        
-            string = String()
-            string.data = json.dumps(objects,cls = MyEncoder)
-            self.pub_obj.publish(string)
+                pub.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
+                string = String()
+                string.data = json.dumps(objects,cls = MyEncoder)
+                self.pub_obj.publish(string)
 
-        except CvBridgeError as e:
-           print(e)
+            except CvBridgeError as e:
+                print(e)
+        return locate
 
 def main(args=None):
 
