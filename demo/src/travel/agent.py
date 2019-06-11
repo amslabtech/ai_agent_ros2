@@ -120,10 +120,9 @@ class Agent(Node):
             for action_name in action_prob:
                 action_probs[action_name] = action_prob[action_name]
 
-        action_probs_keys = action_probs.keys()
         if len(action_probs) > 0:
             action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
-            action_key = list(action_probs_keys)[action_idx]
+            action_key = list(action_probs.keys())[action_idx]
             self.actions[action_key].act()
         
 
