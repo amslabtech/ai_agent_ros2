@@ -39,7 +39,7 @@ class ObjectDetection(Node):
         self.sub_list = []
 
         pub_names = ['/demo/front_camera/detected_image']
-        camera_names = ['/cam/front_camera/image_raw']
+        camera_names = ['/cam/custom_camera/image_raw']
 
         for pub_name, camera_name in zip(pub_names, camera_names):
             pub = self.create_publisher(Image, pub_name)

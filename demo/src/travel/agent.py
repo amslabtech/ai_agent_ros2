@@ -18,6 +18,8 @@ from action import *
 from policy import *
 from state import *
 
+from collections import defaultdict
+
 #cascPath = '/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml'
 #faceCascade = cv2.CascadeClassifier(cascPath)
 #video_capture = cv2.VideoCapture(1)
@@ -32,40 +34,14 @@ def get_unused_dir_num(pdir, pref=None):
             return os.path.join(pdir, search_dir_name)
     raise NotFoundError('Error')
 
-class Environment():
-
-    def __init__(self):
-        pass
-
-class EnvironmentText(Environment):
-
-    def __init__(self):
-        super().__init__()
-        self.text = ""
-        self.text_policy = None
-
-class EnvironmentKeyboard(Environment):
-    def __init__(self):
-        super().__init__()
-        self.keyboard_policy = None
-
 class Agent(Node):
 
     def __init__(self):
         super().__init__('traveller')
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Twist, '/pos/cmd_pos')
-        self.sub_img_list = []
-        self.sub_detected_img_list = []
-
-        detected_image_names = ['/demo/front_camera/detected_image']
-        camera_names = ['/cam/front_camera/image_raw']
-
-        for name in camera_names:
-            self.sub_img_list.append(self.create_subscription(Image, name, self.image_sub_closure(name)))
-
-        for name in detected_image_names:
-            self.sub_detected_img_list.append(self.create_subscription(Image, name, self.r_image_sub_closure(name)))
+        self.sub_img = self.create_subscription(Image,'/cam/custom_camera/image_raw', self.image_sub)
+        self.sub_r_img = self.create_subscription(Image,'/demo/r_image', self.r_image_sub)
         # turtlebot3
         # self.pub = self.create_publisher(Twist, '/cmd_vel')
         # self.sub_img = self.create_subscription(Image,'/tb3/camera/image_raw', self.image_sub)
@@ -76,21 +52,20 @@ class Agent(Node):
 
         self.policies = dict()
         self.actions = dict()
-        self.states = []
+        # self.states = []
         self.objects = []
-        self.environments = {}
+        self.states = {}
 
-        self.__init_environment()
+        self.__init_state()
         self.__init_action()
         self.__init_policy()
         self.__init_state()
 
         self.speed = 0.2
-        self.now_state = self.states[0]
 
-    def __init_environment(self):
-        self.environments['text'] = EnvironmentText()
-        self.environments['keyboard'] = EnvironmentKeyboard()
+    def __init_state(self):
+        self.state = State()
+        pass
 
 
     def __init_action(self):
@@ -117,50 +92,45 @@ class Agent(Node):
             self.actions[key] = action
 
     def __init_policy(self):
-        moves = "swxad"
-        for i in range(len(moves)):
-            policy = PolicyKeyboard(moves[i])
-            self.policies[self.move_keys[i]] = policy
-        states = "01"
-        for i in range(len(states)):
-            policy = PolicyKeyboard(states[i])
-            self.policies[self.sts[i]] = policy
-        config = "hl"
-        for i in range(len(config)):
-            policy = PolicyKeyboard(config[i])
-            self.policies[list(self.speed_controls.keys())[i]] = policy
+        keys = "swxad"
+        policy_keys = ["s_pressed","w_pressed","x_pressed","a_pressed","d_pressed"]
+        action_keys = ["stop", "forward", "backward", "left", "right"]
+        probs = np.eye(5)
+        for i in range(len(keys)):
+            action_prob = {}
+            for j in range(len(action_keys)):
+                action_prob[action_keys[j]] = probs[i][j]
+            policy = PolicyKeyboard(keys[i], action_prob)
+            self.policies[policy_keys[i]] = policy
+        # states = "01"
+        # for i in range(len(states)):
+        #     policy = PolicyKeyboard(states[i])
+        #     self.policies[self.sts[i]] = policy
+        # config = "hl"
+        # for i in range(len(config)):
+        #     policy = PolicyKeyboard(config[i])
+        #     self.policies[list(self.speed_controls.keys())[i]] = policy
 
 
-    def __init_state(self):
-        State.default_actions.append(self.actions["stop"])
-        all_keys = self.move_keys + self.sts + list(self.speed_controls.keys())
-        for key in all_keys:
-            policy = self.policies[key]
-            policy.set_action(self.actions[key])
-            State.default_policies.append((policy))
-        state = StateChild()
-        self.states.append(state)
-        state = StateChild()
-        self.states.append(state)
 
+    def step(self):
+        action_probs = defaultdict(int)
+        for policy in self.policies:
+            action_prob = self.policies[policy].check(self.state)
+            for action_name in action_prob:
+                action_probs[action_name] = action_prob[action_name]
 
-    def command(self):
-        action = None
-        for policy in self.now_state.policies + State.default_policies:
-            if policy.check(self.environments):
-                action = policy.action
-                break
-
-        if action is None:
-            action = self.now_state.default_actions[0]
-
-        action.act()
-
+        action_probs_keys = action_probs.keys()
+        if len(action_probs) > 0:
+            action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
+            action_key = list(action_probs_keys)[action_idx]
+            self.actions[action_key].act()
+        
 
     def text_sub(self, otext):
-        self.environments['text'].text_policy = int(otext.data)
-        print("env text_policy",self.environments['text'].text_policy)
-        self.command()
+        self.states['text'].text_policy = int(otext.data)
+        print("state text_policy",self.states['text'].text_policy)
+        # self.step()
 
 
     def keyboard_sub(self, key):
@@ -169,24 +139,23 @@ class Agent(Node):
             key_str = key_str[1:-1]
         elif key_str != 'None':
             key_str = key_str[4:]
-        self.environments['keyboard'].keyboard_policy = key_str
-        print("env keyboard_policy",self.environments['keyboard'].keyboard_policy)
-        self.command()
+        print(key_str)
+        self.state.keyboard = key_str
+        self.step()
 
 
-    def image_sub_closure(self, name):
+    def image_sub(self,oimg):
+        # print("image sub")
 
-        def image_sub(oimg):
-            print("image sub")
-            try:
-                img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
-            except CvBridgeError as e:
-                print(e)
-            cv2.imshow(name, img)
-            cv2.waitKey(3)
-        return image_sub
+        try:
+            img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
+
+        except CvBridgeError as e:
+           print(e)
+
+        cv2.imshow("Image windowt",img)
+        cv2.waitKey(3)
     
-
     def objects_sub(self, otext):
         print(otext.data)
 
@@ -205,20 +174,19 @@ class Agent(Node):
             round(ori.z,2),
             round(ori.w,2)
         )
-        print("position:",self.position)
-        print("orientation",self.orientation)
+        # self.step()
 
 
-    def r_image_sub_closure(self, name):
-        def r_image_sub(r_img):
-            # print("image sub")
-            try:
-                img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
-                cv2.namedWindow(name, cv2.WINDOW_NORMAL)
-                cv2.imshow(name, img)
-            except CvBridgeError as e:
-                print(e)
-        return r_image_sub
+    def r_image_sub(self,r_img):
+        # print("image sub")
+
+        try:
+            img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
+            cv2.namedWindow("result", cv2.WINDOW_NORMAL)
+            cv2.imshow("result", img)
+
+        except CvBridgeError as e:
+           print(e)
 
 
     def _send_twist(self, x_linear, z_angular):
@@ -226,7 +194,6 @@ class Agent(Node):
         twist.linear.x, twist.linear.y, twist.linear.z = x_linear
         twist.angular.x, twist.angular.y, twist.angular.z = z_angular
         self.pub.publish(twist)
-
 
 def main(args=None):
 
