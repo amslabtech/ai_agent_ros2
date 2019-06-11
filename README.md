@@ -10,6 +10,7 @@ $ sudo apt update
 $ sudo apt install ros-$CHOOSE_ROS_DISTRO-desktop                     # $CHOOSE_ROS_DISTRO= crystal
 $ sudo apt install python3-argcomplete
 $ sudo apt install python3-colcon-common-extensions
+$ sudo apt install ros-crystal-cv-bridge*
 ```
 
 ## Prepare object_detection

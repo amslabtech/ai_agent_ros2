@@ -131,8 +131,8 @@ class Agent(Node):
             policy = PolicyKeyboard(keys[i], action_prob)
             self.policies[policy_keys[i]] = policy
 
-        keys = "p"
-        policy_keys = ["p_pressed"]
+        keys = "r"
+        policy_keys = ["r_pressed"]
         probs = np.ones(len(action_keys)) / len(action_keys)
         for i in range(len(keys)):
             action_prob = {}
