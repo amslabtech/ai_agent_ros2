@@ -34,6 +34,15 @@ def get_unused_dir_num(pdir, pref=None):
             return os.path.join(pdir, search_dir_name)
     raise NotFoundError('Error')
 
+def dict_normalize(dict):
+    val_sum = sum(list(dict.values()))
+    if val_sum == 0:
+        pass
+    else:
+        for key in dict.keys():
+            dict[key] /= val_sum
+    return dict
+
 class Agent(Node):
 
     def __init__(self):
@@ -83,6 +92,8 @@ class Agent(Node):
             action_prob = self.policies[policy].check(self.state)
             for action_name in action_prob:
                 action_probs[action_name] += action_prob[action_name]
+        action_probs = dict_normalize(action_probs)
+        # print("action probs", action_probs)  
 
         if len(action_probs) > 0:
             action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
