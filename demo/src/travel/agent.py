@@ -130,9 +130,7 @@ class Agent(Node):
 
     def __init_policy(self):
         keys = "swxad"
-
         action_keys = ["stop", "forward", "backward", "left", "right"]
-
         policy_keys = ["s_pressed","w_pressed","x_pressed","a_pressed","d_pressed"]
         probs = np.eye(5)
         for i in range(len(keys)):
@@ -152,14 +150,27 @@ class Agent(Node):
             policy = PolicyKeyboard(keys[i], action_prob)
             self.policies[policy_keys[i]] = policy
     
-        # states = "01"
-        # for i in range(len(states)):
-        #     policy = PolicyKeyboard(states[i])
-        #     self.policies[self.sts[i]] = policy
-        # config = "hl"
-        # for i in range(len(config)):
-        #     policy = PolicyKeyboard(config[i])
-        #     self.policies[list(self.speed_controls.keys())[i]] = policy
+        keys = "hl"
+        action_keys = ["up", "down"]
+        policy_keys = ["h_pressed","l_pressed"]
+        probs = np.eye(2)
+        for i in range(len(keys)):
+            action_prob = {}
+            for j in range(len(action_keys)):
+                action_prob[action_keys[j]] = probs[i][j]
+            policy = PolicyKeyboard(keys[i], action_prob)
+            self.policies[policy_keys[i]] = policy
+
+        # keys = "01"
+        # action_keys = ["st0", "st1"]
+        # policy_keys = ["0_pressed","1_pressed"]
+        # probs = np.eye(2)
+        # for i in range(len(keys)):
+        #     action_prob = {}
+        #     for j in range(len(action_keys)):
+        #         action_prob[action_keys[j]] = probs[i][j]
+        #     policy = PolicyKeyboard(keys[i], action_prob)
+        #     self.policies[policy_keys[i]] = policy
         
 
     def text_sub(self, otext):
