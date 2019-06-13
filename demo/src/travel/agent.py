@@ -92,6 +92,8 @@ class Agent(Node):
             action_prob = self.policies[policy].check(self.state)
             for action_name in action_prob:
                 action_probs[action_name] += action_prob[action_name]
+        if self.state.keyboard == 'None':
+            action_probs = self.policies["s_pressed"].act_prob.copy()
         action_probs = dict_normalize(action_probs)
         # print("action probs", action_probs)  
 
