@@ -15,7 +15,7 @@ class ActionTwist(Action):
         self.twist_angular = dict['twist_angular']
 
     def act(self):
-        speed = self.agent.speed
+        speed = self.agent.state.speed
         twist_linear = [x * speed for x in self.twist_linear]
         twist_angular = [x * speed for x in self.twist_angular]
         self.agent._send_twist(twist_linear, twist_angular)
@@ -35,5 +35,5 @@ class ActionChangeSpeed(Action):
         self.val = val
 
     def act(self):
-        self.agent.speed = max(0, self.agent.speed + self.val)
-        print("Changed speed to", self.agent.speed)
+        self.agent.state.speed = max(0, self.agent.state.speed + self.val)
+        print("Changed speed to", self.agent.state.speed)

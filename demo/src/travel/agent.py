@@ -1,3 +1,4 @@
+import json
 import os
 import cv2
 import sys
@@ -79,9 +80,6 @@ class Agent(Node):
         self.__init_policy()
         self.__init_state()
 
-        self.speed = 0.2
-
-
         self.time_period = 0.1
         self.tmr = self.create_timer(self.time_period, self.step)
 
@@ -143,6 +141,7 @@ class Agent(Node):
             self.policies[policy_keys[i]] = policy
 
         keys = "r"
+        action_keys = action_keys[1:]
         policy_keys = ["r_pressed"]
         probs = np.ones(len(action_keys)) / len(action_keys)
         for i in range(len(keys)):
@@ -151,7 +150,7 @@ class Agent(Node):
                 action_prob[action_keys[j]] = probs[j]
             policy = PolicyKeyboard(keys[i], action_prob)
             self.policies[policy_keys[i]] = policy
-    
+
         keys = "hl"
         action_keys = ["up", "down"]
         policy_keys = ["h_pressed","l_pressed"]
@@ -205,7 +204,11 @@ class Agent(Node):
     
 
     def objects_sub(self, otext):
-        print(otext.data)
+        res = json.loads(otext.data)
+        objects = res['objects']
+        features = res['feature']
+        self.state.features = np.array(features, dtype = 'float')
+        print(objects)
 
 
     def odom_sub(self, data):

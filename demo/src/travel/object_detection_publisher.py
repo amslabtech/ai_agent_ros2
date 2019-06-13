@@ -73,17 +73,14 @@ class ObjectDetection(Node):
 
                 # Object detection
                 image = PIL_Image.fromarray(img)
-
-                result = self.model.detect_image(image)
-
-                objects = result['objects']
-
+                results = self.model.detect_image(image)
+                objects = results['objects']
                 r_image = make_r_image(image, objects, self.colors)
                 result = np.asarray(r_image)
 
                 pub.publish(self.bridge.cv2_to_imgmsg(result, "bgr8"))
                 string = String()
-                string.data = json.dumps(objects,cls = MyEncoder)
+                string.data = json.dumps(results,cls = MyEncoder)
                 self.pub_obj.publish(string)
 
             except CvBridgeError as e:
