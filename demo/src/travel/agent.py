@@ -207,8 +207,9 @@ class Agent(Node):
     def objects_sub(self, otext):
         res = json.loads(otext.data)
         objects = res['objects']
-        features = res['feature']
-        self.state.features = np.array(features, dtype = 'float')
+        if 'feature' in res.keys():
+            features = res['feature']
+            self.state.features = np.array(features, dtype = 'float')
         print(objects)
 
 
