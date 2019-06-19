@@ -9,6 +9,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from object_detection.yolo import YOLO
+from object_detection.mask_rcnn import MaskRCNN
 from object_detection.utils import generate_colors, make_r_image
 from PIL import Image as PIL_Image
 from PIL import ImageDraw
@@ -38,28 +39,36 @@ class ObjectDetection(Node):
         self.pub_list = []
         self.sub_list = []
 
-        pub_names = ['/demo/front_camera/detected_image']
-        camera_names = ['/cam/custom_camera/image_raw']
+        self.model_name = 'mrcnn'
+
+        pub_names = ['/demo/custom_camera/detected_image']
+        camera_names = ['/demo/image_raw']
 
         for pub_name, camera_name in zip(pub_names, camera_names):
             pub = self.create_publisher(Image, pub_name)
             self.pub_list.append(pub)
             self.sub_list.append(self.create_subscription(Image, camera_name, self.locate_closure(pub)))
 
-        data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
+        yolo_data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
+        mrcnn_data_folder = "src/travel/object_detection/model_data/mrcnn/coco/"
         
-        yolo_args = {
-            "model_path": data_folder+"yolo.h5",
-            "score": 0.01,
-            "anchors_path": data_folder+"anchors.txt",
-            "classes_path": data_folder+"classes.txt",
-                }
+        if self.model_name == 'mrcnn':
+            classes_path = os.path.join(mrcnn_data_folder, "classes.txt")
+            self.model = MaskRCNN(os.path.join(mrcnn_data_folder, "mask_rcnn_coco.h5"), classes_path)
+            classes_path = os.path.expanduser(classes_path)
+        else:
+            yolo_args = {
+                "model_path": os.path.join(yolo_data_folder, "yolo.h5"),
+                "score": 0.01,
+                "anchors_path": os.path.join(yolo_data_folder, "anchors.txt"),
+                "classes_path": os.path.join(yolo_data_folder, "classes.txt"),
+                    }
 
-        self.yolo_args = dict((k, v) for k, v in yolo_args.items() if v)
-        self.model = YOLO(**self.yolo_args)
+            yolo_args = dict((k, v) for k, v in yolo_args.items() if v)
+            classes_path = os.path.expanduser(yolo_args["classes_path"])
+            self.model = YOLO(**yolo_args)
         
         class_num = 0
-        classes_path = os.path.expanduser(self.yolo_args["classes_path"])
         with open(classes_path) as f:
             class_num = len(f.readlines())
         colors = generate_colors(class_num)
@@ -73,8 +82,15 @@ class ObjectDetection(Node):
 
                 # Object detection
                 image = PIL_Image.fromarray(img)
+
                 results = self.model.detect_image(image)
+
                 objects = results['objects']
+
+                for obj in objects:
+                    if 'mask' in obj.keys():
+                        obj.pop('mask')
+
                 r_image = make_r_image(image, objects, self.colors)
                 result = np.asarray(r_image)
 

@@ -53,8 +53,8 @@ class Agent(Node):
         self.sub_img_list = []
         self.sub_detected_img_list = []
 
-        detected_image_names = ['/demo/front_camera/detected_image']
-        camera_names = ['/cam/front_camera/image_raw']
+        detected_image_names = ['/demo/custom_camera/detected_image']
+        camera_names = ['/demo/image_raw']
 
         for name in camera_names:
             self.sub_img_list.append(self.create_subscription(Image, name, self.image_sub_closure(name)))
@@ -232,7 +232,7 @@ class Agent(Node):
 
     def r_image_sub_closure(self, name):
         def r_image_sub(r_img):
-            # print("image sub")
+            print("r_image_sub_closure")
             try:
                 img = self.bridge.imgmsg_to_cv2(r_img, "bgr8")
                 cv2.namedWindow(name, cv2.WINDOW_NORMAL)

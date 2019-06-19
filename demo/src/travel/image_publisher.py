@@ -21,7 +21,7 @@ class Img(Node):
 
 
     def check(self):
-        vid = cv2.VideoCapture('http://172.16.0.100:8081/')
+        vid = cv2.VideoCapture(0)
         if not vid.isOpened():
             raise IOError("Couldn't open webcam or video")
 
