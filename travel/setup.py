@@ -1,6 +1,6 @@
 from setuptools import setup
  
-package_name = 'control'
+package_name = 'travel'
  
 setup(
     name=package_name,

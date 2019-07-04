@@ -42,15 +42,16 @@ class ObjectDetection(Node):
         self.model_name = 'mrcnn'
 
         pub_names = ['/demo/custom_camera/detected_image']
-        camera_names = ['/demo/image_raw']
+        camera_names = ['/cam/custom_camera/image_raw']
 
         for pub_name, camera_name in zip(pub_names, camera_names):
             pub = self.create_publisher(Image, pub_name)
             self.pub_list.append(pub)
             self.sub_list.append(self.create_subscription(Image, camera_name, self.locate_closure(pub)))
 
-        yolo_data_folder = "src/travel/object_detection/model_data/yolo3/coco/"
-        mrcnn_data_folder = "src/travel/object_detection/model_data/mrcnn/coco/"
+        PACKAGE_DIR = "src/ai_agent_ros2/travel"
+        yolo_data_folder = PACKAGE_DIR+"/"+"object_detection/model_data/yolo3/coco/"
+        mrcnn_data_folder = PACKAGE_DIR+"/"+"object_detection/model_data/mrcnn/coco/"
         
         if self.model_name == 'mrcnn':
             classes_path = os.path.join(mrcnn_data_folder, "classes.txt")

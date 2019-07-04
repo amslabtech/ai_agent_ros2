@@ -65,7 +65,7 @@ class Agent(Node):
         self.sub_detected_img_list = []
 
         detected_image_names = ['/demo/custom_camera/detected_image']
-        camera_names = ['/demo/image_raw']
+        camera_names = ['/cam/custom_camera/image_raw']
 
         for name in camera_names:
             self.sub_img_list.append(self.create_subscription(Image, name, self.image_sub_closure(name)))
