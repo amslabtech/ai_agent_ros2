@@ -6,6 +6,7 @@ import rclpy
 import numpy as np
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
+from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -24,6 +25,16 @@ from collections import defaultdict
 #cascPath = '/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml'
 #faceCascade = cv2.CascadeClassifier(cascPath)
 #video_capture = cv2.VideoCapture(1)
+
+def reset_simulation():
+    node = rclpy.create_node("reset")
+    reset_sim = node.create_client(Empty, '/reset_simulation')
+
+    while not reset_sim.wait_for_service(timeout_sec=1.0):
+        print('/reset_simulation service not available, waiting again...')
+
+    reset_future = reset_sim.call_async(Empty.Request())
+    rclpy.spin_until_future_complete(node, reset_future)
 
 def get_unused_dir_num(pdir, pref=None):
     os.makedirs(pdir, exist_ok=True)
@@ -97,7 +108,11 @@ class Agent(Node):
             action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
             action_key = list(action_probs.keys())[action_idx]
             self.actions[action_key].act()
+
+        reward = self.calc_reward()
+        print("reward", reward)
         
+
     def __init_state(self):
         self.state = State()
         pass
@@ -125,6 +140,7 @@ class Agent(Node):
         for key in self.speed_controls.keys():
             action = ActionChangeSpeed(self.speed_controls[key],self)
             self.actions[key] = action
+
 
     def __init_policy(self):
         keys = "swxad"
@@ -206,6 +222,7 @@ class Agent(Node):
 
     def objects_sub(self, otext):
         res = json.loads(otext.data)
+        print(res)
         objects = res['objects']
         if 'feature' in res.keys():
             features = res['feature']
@@ -215,19 +232,21 @@ class Agent(Node):
 
     def odom_sub(self, data):
         pos = data.pose.pose.position
-        self.position = (
-            round(pos.x,2),
-            round(pos.y,2),
-            round(pos.z,2)
+        self.state.prev_pos = self.state.pos
+        self.state.pos = (
+            round(pos.x,3),
+            round(pos.y,3),
+            round(pos.z,3)
         )
         ori = data.pose.pose.orientation
-        self.orientation = (
-            round(ori.x,2),
-            round(ori.y,2),
-            round(ori.z,2),
-            round(ori.w,2)
+        self.state.prev_ori = self.state.ori
+        self.state.ori = (
+            round(ori.x,3),
+            round(ori.y,3),
+            round(ori.z,3),
+            round(ori.w,3)
         )
-        # self.step()
+        # print(self.state.prev_pos,"→",self.state.pos)
 
 
     def r_image_sub_closure(self, name):
@@ -247,6 +266,33 @@ class Agent(Node):
         twist.linear.x, twist.linear.y, twist.linear.z = x_linear
         twist.angular.x, twist.angular.y, twist.angular.z = z_angular
         self.pub.publish(twist)
+    
+
+    def calc_reward(self, eps=0.05):
+        def calc_dist(p1, p2):
+            diff = None
+            if p1 is not None and p2 is not None:
+                diff = 0.0
+                for i in range(3):
+                    diff += (p1[i] - p2[i])**2
+                diff = np.sqrt(diff)
+            return diff
+
+        # 
+        reward = -1 # for living
+
+        diff = calc_dist(self.state.prev_pos, self.state.pos)
+        if diff is not None and diff < eps:
+            print("Stacked!")
+            reward = -10 # for stack
+
+        diff = calc_dist(self.state.pos, self.state.goal)
+        if diff is not None and diff < 3.0:
+            print("Goal!")
+            reward = 10 # for goal
+
+        return reward
+
 
 
 def main(args=None):
@@ -254,7 +300,9 @@ def main(args=None):
     rclpy.init(args=args)
     agent = Agent()
     try:
-        rclpy.spin(agent)
+        while True:
+            rclpy.spin_once(agent)
+            reset_simulation()
     finally:
         if agent not in locals():
             agent.destroy_node()
