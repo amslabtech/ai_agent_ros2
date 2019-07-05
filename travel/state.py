@@ -9,5 +9,4 @@ class State():
         self.ori = None
         self.prev_pos = None
         self.prev_ori = None
-        pass
-
+        self.stacked_reward = 100

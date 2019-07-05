@@ -26,15 +26,12 @@ from collections import defaultdict
 #faceCascade = cv2.CascadeClassifier(cascPath)
 #video_capture = cv2.VideoCapture(1)
 
-def reset_simulation():
-    node = rclpy.create_node("reset")
-    reset_sim = node.create_client(Empty, '/reset_simulation')
-
+def reset_simulation(reset_sim,agent):
     while not reset_sim.wait_for_service(timeout_sec=1.0):
-        print('/reset_simulation service not available, waiting again...')
+        agent.get_logger().info('/reset_simulation service not available, waiting again...')
 
     reset_future = reset_sim.call_async(Empty.Request())
-    rclpy.spin_until_future_complete(node, reset_future)
+    rclpy.spin_until_future_complete(agent, reset_future)
 
 def get_unused_dir_num(pdir, pref=None):
     os.makedirs(pdir, exist_ok=True)
@@ -95,27 +92,8 @@ class Agent(Node):
         self.tmr = self.create_timer(self.time_period, self.step)
 
 
-    def step(self):
-        action_probs = defaultdict(int)
-        for policy in self.policies:
-            action_prob = self.policies[policy].check(self.state)
-            for action_name in action_prob:
-                action_probs[action_name] += action_prob[action_name]
-        action_probs = dict_normalize(action_probs)
-        # print("action probs", action_probs)  
-
-        if len(action_probs) > 0:
-            action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
-            action_key = list(action_probs.keys())[action_idx]
-            self.actions[action_key].act()
-
-        reward = self.calc_reward()
-        print("reward", reward)
-        
-
     def __init_state(self):
         self.state = State()
-        pass
 
 
     def __init_action(self):
@@ -179,17 +157,45 @@ class Agent(Node):
         policy = PolicyKeyboard("None", {"stop": 1.0})
         self.policies["keyboard_released"] = policy
 
-        # keys = "01"
-        # action_keys = ["st0", "st1"]
-        # policy_keys = ["0_pressed","1_pressed"]
-        # probs = np.eye(2)
-        # for i in range(len(keys)):
-        #     action_prob = {}
-        #     for j in range(len(action_keys)):
-        #         action_prob[action_keys[j]] = probs[i][j]
-        #     policy = PolicyKeyboard(keys[i], action_prob)
-        #     self.policies[policy_keys[i]] = policy
+    
+    def reset(self):
+        self.state.stacked_reward = 100
+        print("reset")
+
+
+    def step(self):
+        # action_key = get_action_key()
+        action_key = self.random_action()
+        self.actions[action_key].act()
+
+        reward = self.calc_reward()
+        print("reward", reward)
+        print("stacked reward",self.state.stacked_reward)
+        self.state.stacked_reward += reward
+
+
+    def random_action(self):
+        action_probs = self.policies["r_pressed"].act_prob
+        action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
+        action_key = list(action_probs.keys())[action_idx]
+
+        return action_key
+
+
+    def get_action_key(self):
+        action_probs = defaultdict(int)
+        for policy in self.policies:
+            action_prob = self.policies[policy].check(self.state)
+            for action_name in action_prob:
+                action_probs[action_name] += action_prob[action_name]
+        action_probs = dict_normalize(action_probs)
+        # print("action probs", action_probs)  
+
+        if len(action_probs) > 0:
+            action_idx = np.random.choice(len(action_probs), 1, p=list(action_probs.values()))[0]
+            action_key = list(action_probs.keys())[action_idx]
         
+        return action_key
 
     def text_sub(self, otext):
         self.states['text'].text_policy = int(otext.data)
@@ -283,7 +289,7 @@ class Agent(Node):
 
         diff = calc_dist(self.state.prev_pos, self.state.pos)
         if diff is not None and diff < eps:
-            print("Stacked!")
+            print("Stucked!")
             reward = -10 # for stack
 
         diff = calc_dist(self.state.pos, self.state.goal)
@@ -298,12 +304,23 @@ class Agent(Node):
 def main(args=None):
 
     rclpy.init(args=args)
-    agent = Agent()
+    agent = Agent() 
+    reset_sim = agent.create_client(Empty, '/reset_simulation')
+    
+    STEPS = 10000
+    EPISODES = 100
+
     try:
-        while True:
-            rclpy.spin_once(agent)
-            reset_simulation()
-    finally:
+        for e in range(EPISODES):
+            for step in range(STEPS):
+                if agent.state.stacked_reward > 0:
+                    rclpy.spin_once(agent)
+                else:
+                    agent.reset()
+                    reset_simulation(reset_sim, agent)
+                    break
+
+    except KeyboardInterrupt:
         if agent not in locals():
             agent.destroy_node()
         rclpy.shutdown()
