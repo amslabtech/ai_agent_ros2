@@ -26,13 +26,6 @@ from collections import defaultdict
 #faceCascade = cv2.CascadeClassifier(cascPath)
 #video_capture = cv2.VideoCapture(1)
 
-def reset_simulation(reset_sim,agent):
-    while not reset_sim.wait_for_service(timeout_sec=1.0):
-        agent.get_logger().info('/reset_simulation service not available, waiting again...')
-
-    reset_future = reset_sim.call_async(Empty.Request())
-    rclpy.spin_until_future_complete(agent, reset_future)
-
 def get_unused_dir_num(pdir, pref=None):
     os.makedirs(pdir, exist_ok=True)
     dir_list = os.listdir(pdir)
@@ -64,6 +57,8 @@ class Agent(Node):
         detected_image_names = ['/demo/custom_camera/detected_image']
         camera_names = ['/cam/custom_camera/image_raw']
 
+        self.raw = None
+
         for name in camera_names:
             self.sub_img_list.append(self.create_subscription(Image, name, self.image_sub_closure(name)))
 
@@ -90,6 +85,7 @@ class Agent(Node):
 
         self.time_period = 0.1
         self.tmr = self.create_timer(self.time_period, self.step)
+        self.reset_sim = self.create_client(Empty, '/reset_simulation')
 
 
     def __init_state(self):
@@ -159,8 +155,13 @@ class Agent(Node):
 
     
     def reset(self):
-        self.state.stacked_reward = 100
-        print("reset")
+        self.state.stacked_reward = 0
+
+        while not self.reset_sim.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/reset_simulation service not available, waiting again...')
+
+        reset_future = self.reset_sim.call_async(Empty.Request())
+        rclpy.spin_until_future_complete(self, reset_future)
 
 
     def step(self):
@@ -168,10 +169,9 @@ class Agent(Node):
         action_key = self.random_action()
         self.actions[action_key].act()
 
-        reward = self.calc_reward()
+        reward, _ = self.calc_reward()
         print("reward", reward)
         print("stacked reward",self.state.stacked_reward)
-        self.state.stacked_reward += reward
 
 
     def random_action(self):
@@ -200,7 +200,6 @@ class Agent(Node):
     def text_sub(self, otext):
         self.states['text'].text_policy = int(otext.data)
         print("state text_policy",self.states['text'].text_policy)
-        # self.step()
 
 
     def keyboard_sub(self, key):
@@ -214,14 +213,13 @@ class Agent(Node):
 
 
     def image_sub_closure(self, name):
-
         def image_sub(oimg):
             print("image sub")
             try:
-                img = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
+                self.raw = self.bridge.imgmsg_to_cv2(oimg, "bgr8")
             except CvBridgeError as e:
                 print(e)
-            cv2.imshow(name, img)
+            cv2.imshow(name, self.raw)
             cv2.waitKey(3)
         return image_sub
     
@@ -240,9 +238,10 @@ class Agent(Node):
         pos = data.pose.pose.position
         self.state.prev_pos = self.state.pos
         self.state.pos = (
-            round(pos.x,3),
-            round(pos.y,3),
-            round(pos.z,3)
+            round(pos.x,1),
+            round(pos.y,1),
+            # round(pos.z,1)
+            0.0
         )
         ori = data.pose.pose.orientation
         self.state.prev_ori = self.state.ori
@@ -274,7 +273,7 @@ class Agent(Node):
         self.pub.publish(twist)
     
 
-    def calc_reward(self, eps=0.05):
+    def calc_reward(self, eps=0.01):
         def calc_dist(p1, p2):
             diff = None
             if p1 is not None and p2 is not None:
@@ -284,31 +283,39 @@ class Agent(Node):
                 diff = np.sqrt(diff)
             return diff
 
-        # 
-        reward = -1 # for living
+        reward = -0.05 # for living
+        done = False
 
-        diff = calc_dist(self.state.prev_pos, self.state.pos)
-        if diff is not None and diff < eps:
-            print("Stucked!")
-            reward = -10 # for stack
+        # diff = calc_dist(self.state.prev_pos, self.state.pos)
+        # if diff is not None and diff < eps:
+        #     print("stucked!")
+        #     reward = -100 # for stack
+
+        for pitfall in self.state.pitfalls:
+            diff = calc_dist(self.state.pos, pitfall)
+            if diff is not None and diff < 0.65:
+                print("pitfall!")
+                done = True
+                reward = -1 # for pitfall
 
         diff = calc_dist(self.state.pos, self.state.goal)
-        if diff is not None and diff < 3.0:
-            print("Goal!")
-            reward = 10 # for goal
-
-        return reward
-
+        if diff is not None and diff < 0.6:
+            print("goal!")
+            done = True
+            reward = 1 # for goal
+        
+        print("reward", reward)
+        self.state.stacked_reward += reward
+        return reward, done
 
 
 def main(args=None):
 
     rclpy.init(args=args)
     agent = Agent() 
-    reset_sim = agent.create_client(Empty, '/reset_simulation')
     
     STEPS = 10000
-    EPISODES = 100
+    EPISODES = 1000
 
     try:
         for e in range(EPISODES):
@@ -317,7 +324,6 @@ def main(args=None):
                     rclpy.spin_once(agent)
                 else:
                     agent.reset()
-                    reset_simulation(reset_sim, agent)
                     break
 
     except KeyboardInterrupt:

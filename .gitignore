@@ -1,8 +1,13 @@
-build
-install
-log
+#dirs
+build/*
+install/*
+log/*
 data-sets
+__pycache__/
+results/
+
+#files
 *h5
-__pycache__
 .ipynb_checkpoints
 .vscode
+.npy

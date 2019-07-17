@@ -629,45 +629,45 @@
       <pose frame=''>0.323933 -0.173846 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>185 562000000</sim_time>
-      <real_time>161 425654661</real_time>
-      <wall_time>1561973826 716680397</wall_time>
-      <iterations>161182</iterations>
+      <sim_time>0 0</sim_time>
+      <real_time>0 0</real_time>
+      <wall_time>1562897296 252901147</wall_time>
+      <iterations>0</iterations>
       <model name='fcar'>
-        <pose frame=''>-0.173187 -0.049892 0.433101 -0.092064 -0.757296 -0.004672</pose>
+        <pose frame=''>0.014905 0.002881 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='caster'>
-          <pose frame=''>-0.709589 -0.028998 0.199997 -0.092064 -0.757296 -0.004672</pose>
-          <velocity>-0.000331 -6.4e-05 -0.002587 0.002914 0.001015 0</velocity>
-          <acceleration>-0.533845 0.51933 -9.20193 0 -0 0</acceleration>
-          <wrench>-0.533845 0.51933 -9.20193 0 -0 0</wrench>
+          <pose frame=''>-0.535095 0.002881 0.2 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0.700442 0.566293 -8.1291 0 -0 0</acceleration>
+          <wrench>0.700442 0.566293 -8.1291 0 -0 0</wrench>
         </link>
         <link name='left_wheel'>
-          <pose frame=''>0.295811 -0.389297 0.300012 1.5707 0.048515 0.014686</pose>
-          <velocity>-0.000768 -0.000294 -9.7e-05 0.000975 -0.002524 -0.000101</velocity>
-          <acceleration>-1.09467 0.984925 -3.78747 -0.135546 1.19536 -3.0053</acceleration>
-          <wrench>-1.09467 0.984925 -3.78747 0 -0 0</wrench>
+          <pose frame=''>0.464905 -0.372148 0.3 1.5707 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-0.173146 3.09314 8.04346 2.74209 -1.3547 1.31279</acceleration>
+          <wrench>-0.173146 3.09314 8.04346 0 -0 0</wrench>
         </link>
         <link name='mbody'>
-          <pose frame=''>-0.159651 -0.020919 0.400006 1e-06 -1.5e-05 0.014691</pose>
-          <velocity>-0.000902 -0.000327 -0.001061 0.000943 -0.002684 -0.000151</velocity>
-          <acceleration>-1.38282 1.27342 -6.98135 -0.311525 0.837596 -3.06721</acceleration>
-          <wrench>-0.691409 0.636711 -3.49068 0 -0 0</wrench>
+          <pose frame=''>0.014905 0.002881 0.4 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-1.77855 3.39188 -1.36763 2.63006 0.412183 1.44595</acceleration>
+          <wrench>-0.889277 1.69594 -0.683813 0 -0 0</wrench>
         </link>
         <link name='right_wheel'>
-          <pose frame=''>0.284793 0.36068 0.300012 1.5707 0.021181 0.014689</pose>
-          <velocity>-0.000582 -0.000312 0.000469 0.000932 -0.002706 -0.00015</velocity>
-          <acceleration>-0.935506 0.96642 -6.55819 -0.177358 1.44633 3.13069</acceleration>
-          <wrench>-0.935506 0.96642 -6.55819 0 -0 0</wrench>
+          <pose frame=''>0.464905 0.37791 0.3 1.5707 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>-1.20436 2.94822 0.343878 2.34876 -1.25338 1.27205</acceleration>
+          <wrench>-1.20436 2.94822 0.343878 0 -0 0</wrench>
         </link>
         <model name='camera'>
-          <pose frame=''>-0.687102 -0.106153 0.838306 -0.076067 -0.024162 -3.10884</pose>
+          <pose frame=''>-0.683923 0.005452 0.862719 0 -0 3.14132</pose>
           <scale>1 1 1</scale>
           <link name='link'>
-            <pose frame=''>-0.858424 -0.028617 0.862649 -1e-06 -2.6e-05 -3.12717</pose>
-            <velocity>-0.001187 -0.000486 0.002211 0.001023 -0.005227 -7.1e-05</velocity>
-            <acceleration>-1.06323 -0.190583 -0.080466 -0.952459 -0.807464 1.97854</acceleration>
-            <wrench>-0.106323 -0.019058 -0.008047 0 -0 0</wrench>
+            <pose frame=''>-0.683923 0.005452 0.862719 0 -0 3.14132</pose>
+            <velocity>0 0 0 0 -0 0</velocity>
+            <acceleration>-0.410694 0.370565 -0.00395 -2.35368 0.061702 1.79674</acceleration>
+            <wrench>-0.041069 0.037057 -0.000395 0 -0 0</wrench>
           </link>
         </model>
       </model>
@@ -687,7 +687,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose frame=''>7.89626 -0.0088 3.39476 0 0.348 3.12318</pose>
+        <pose frame=''>7.32606 0.264485 1.82752 0 -0 3.14159</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>

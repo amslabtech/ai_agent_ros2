@@ -17,7 +17,8 @@ setup(
         'action',
         'policy',
         'state',
-        'agent'
+        'agent',
+        'rlagent'
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -44,6 +45,7 @@ setup(
             'image_publisher = image_publisher:main',
             'object_detection_publisher = object_detection_publisher:main',
             'agent = agent:main',
+            'rlagent = rlagent:main',
         ],
     },
 )
