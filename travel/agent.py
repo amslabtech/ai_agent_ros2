@@ -71,10 +71,10 @@ class Agent(Node):
         self.sub_key = self.create_subscription(String,'/demo/keyboard', self.keyboard_sub)
         self.sub_objects = self.create_subscription(String,'/demo/objects', self.objects_sub)
         self.sub_odom = self.create_subscription(Odometry,'/pos/odom_pos', self.odom_sub)
+        self.sub_action_id = self.create_subscription(String,'/pos/action_id', self.action_id_sub)
 
         self.policies = dict()
         self.actions = dict()
-        # self.states = []
         self.objects = []
         self.states = {}
 
@@ -165,13 +165,15 @@ class Agent(Node):
 
 
     def step(self):
-        # action_key = get_action_key()
-        action_key = self.random_action()
-        self.actions[action_key].act()
+        # # action_key = get_action_key()
+        # action_key = self.random_action()
 
-        reward, _ = self.calc_reward()
-        print("reward", reward)
-        print("stacked reward",self.state.stacked_reward)
+        # self.actions[action_key].act()
+
+        # reward, _ = self.calc_reward()
+        # print("reward", reward)
+        # print("stacked reward",self.state.stacked_reward)
+        pass
 
 
     def random_action(self):
@@ -196,6 +198,11 @@ class Agent(Node):
             action_key = list(action_probs.keys())[action_idx]
         
         return action_key
+
+    def action_id_sub(self, action_id):
+        action_by_id = ["forward", "left", "right"] # actions available to be designated by id
+        action_key = action_by_id[int(action_id.data)]
+        self.actions[action_key].act()
 
     def text_sub(self, otext):
         self.states['text'].text_policy = int(otext.data)
@@ -313,18 +320,9 @@ def main(args=None):
 
     rclpy.init(args=args)
     agent = Agent() 
-    
-    STEPS = 10000
-    EPISODES = 1000
 
     try:
-        for e in range(EPISODES):
-            for step in range(STEPS):
-                if agent.state.stacked_reward > 0:
-                    rclpy.spin_once(agent)
-                else:
-                    agent.reset()
-                    break
+        rclpy.spin(agent)
 
     except KeyboardInterrupt:
         if agent not in locals():

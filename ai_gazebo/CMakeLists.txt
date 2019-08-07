@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(gazebo)
+project(ai_gazebo)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)

@@ -5,6 +5,7 @@ log/*
 data-sets
 __pycache__/
 results/
+*.egg-info
 
 #files
 *h5

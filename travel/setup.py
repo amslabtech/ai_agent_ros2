@@ -18,7 +18,8 @@ setup(
         'policy',
         'state',
         'agent',
-        'rlagent'
+        'rlagent',
+        'spawn_agent'
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -46,6 +47,7 @@ setup(
             'object_detection_publisher = object_detection_publisher:main',
             'agent = agent:main',
             'rlagent = rlagent:main',
+            'spawn_agent = spawn_agent:main',
         ],
     },
 )
