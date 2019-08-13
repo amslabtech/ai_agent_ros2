@@ -17,7 +17,9 @@ colcon build
 r2; rs;
 source src/ai_agent_ros2/setup.sh 
 
+'''
 # Execute program in GUI 
 cd ~/ws/src/ai_agent_ros2
 python3 scripts/gg_demo.py -g
+python3 scripts/gg_demo_using_dqn.py -g
 ```

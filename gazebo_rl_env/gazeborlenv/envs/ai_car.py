@@ -15,6 +15,7 @@ import rclpy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from std_srvs.srv import Empty
+from nav_msgs.msg import Odometry
 from ros2pkg.api import get_prefix_path
 
 
@@ -46,7 +47,8 @@ class AICarEnv(gym.Env):
         # class variables
         # self._observation_msg = None
         self._observation_img = None
-        self.max_episode_steps = 1024  # default value, can be updated from baselines
+        # self.max_episode_steps = 1024  # default value, can be updated from baselines
+        self.max_episode_steps = 100
         self.iterator = 0
         self.reset_flag = True
 
@@ -55,10 +57,14 @@ class AICarEnv(gym.Env):
         camera_names = ['/cam/custom_camera/image_raw']
         self.sub_img = self.node.create_subscription(
             Image, camera_names[0], self.observation_img_callback)
+        self.sub_odom = self.node.create_subscription(Odometry,'/pos/odom_pos', self.odom_get_callback)
         self.reset_sim = self.node.create_client(Empty, '/reset_simulation')
 
         # 0: "forward", 1: "left", 2: "right"
         self.action_space = gym.spaces.Discrete(3)
+
+        self.pos = np.array([0, 0])
+        self.target_pos = np.array([-6, 1])
 
         # observation = (240,320,3)
         screen_height, screen_width = (240, 320)
@@ -67,6 +73,12 @@ class AICarEnv(gym.Env):
                 screen_height, screen_width, 3), dtype=np.uint8)
 
         self.bridge = CvBridge()
+
+    def odom_get_callback(self, data):
+        pos = data.pose.pose.position
+        self.pos = np.array([
+            round(pos.x,1),
+            round(pos.y,1)])
 
     def observation_img_callback(self, oimg):
         """
@@ -106,8 +118,8 @@ class AICarEnv(gym.Env):
         """
         Compute reward
         """
-        ## To Do: implementation
-        return -1
+        distance = np.sqrt(np.sum(np.square(self.pos - self.target_pos)))
+        return -1 * distance
 
     def step(self, action):
         """
@@ -134,7 +146,8 @@ class AICarEnv(gym.Env):
         reward = self.computeReward()
 
         # Calculate if the env has been solved
-        done = bool(self.iterator == self.max_episode_steps)
+        distance = np.sqrt(np.sum(np.square(self.pos - self.target_pos)))
+        done = (self.iterator == self.max_episode_steps or distance <= 1.0)
 
         ## To Do: implementation
         info = {}

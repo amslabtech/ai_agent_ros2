@@ -56,7 +56,11 @@ def generateLaunchDescription(gzclient, multiInstance, port):
     # Creation of ROS2 LaunchDescription obj.
 
     worldPath = os.path.join(os.path.dirname(gazeborlenv.__file__), 'worlds',
+                             'test8.world')
+    '''
+    worldPath = os.path.join(os.path.dirname(gazeborlenv.__file__), 'worlds',
                              'empty.world')
+                             '''
 
     launchDesc = LaunchDescription([
         ExecuteProcess(
